@@ -122,7 +122,7 @@
       // Xử lý phần DATA
       const dataLines = dataPart.split('\n');
       const data = dataLines.map(line => {
-        line = line.replace(',', '.')
+        line = line.replaceAll(',', '.')
         const [x, y] = line.trim().split('\t').map(str => parseFloat(str.trim()));
         return { x: x, y: y };
       });
