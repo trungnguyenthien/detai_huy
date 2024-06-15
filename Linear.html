@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Static Layout</title>
+  <!-- Include Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body,
+    html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    .textareas {
+      display: flex;
+      flex: 1;
+      margin-top: 10px;
+    }
+
+    textarea {
+      width: 50%;
+      height: calc(100% - 20px);
+      margin: 0;
+      padding: 10px;
+      box-sizing: border-box;
+      resize: none;
+      overflow-y: auto;
+      word-wrap: break-word;
+    }
+
+    #textarea1 {
+      border-right: 1px solid #ccc;
+    }
+
+    .execute-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <button class="execute-button btn btn-primary">Execute</button>
+  <div class="container">
+    <h4 class="text-center">Phương trình đường trung bình <br /> MRI intensity và HU</h1>
+      <div class="textareas">
+        <textarea id="textarea1" placeholder="{TextArea1}"></textarea>
+        <textarea id="textarea2" placeholder="{TextArea2}"></textarea>
+      </div>
+  </div>
+
+  <!-- Include jQuery -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <!-- Include Lodash -->
+  <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+  <!-- Include Bootstrap JS -->
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <script>
+    // Đăng ký sự kiện click sau khi trang load hoàn tất
+    $(document).ready(function () {
+      $(".execute-button").click(function () {
+        let { VARS, data } = processInput($('#textarea1').val())
+        // Tách data thành nhiều phần bằng nhau.
+        let parts = chunk(data, VARS.PART)
+        let outputArr = Array()
+        let nPart = 0
+        parts.forEach((arrayXY, index, all) => {
+          nPart += 1
+          outputArr.push("---------- PART " + nPart + " ----------")
+          arrayXY.forEach((xy) =>
+            outputArr.push(xy.x + "\t" + xy.y)
+          )
+          let array_x = arrayXY.map(xy => xy.x)
+          let array_y = arrayXY.map(xy => xy.y)
+          let result = LeastSquares(array_x, array_y)
+          outputArr.push("⚡️ Y = AX + B")
+          outputArr.push("#A = " + result.a)
+          outputArr.push("#B = " + result.b)
+          outputArr.push("\n")
+        })
+
+        $('#textarea2').text(outputArr.join('\n'))
+      });
+    });
+
+    function processInput(input) {
+      // Tách phần VARIABLES và DATA
+      const parts = input.split(/={4,}/); // Tách bằng 4 dấu = liên tiếp trở lên
+      if (parts.length < 2) {
+        throw new Error("Input format is incorrect.");
+      }
+
+      // Lấy phần VARIABLES và DATA
+      const variablesPart = parts[0].trim();
+      const dataPart = parts[1].trim();
+
+      // Xử lý phần VARIABLES
+      const variablesLines = variablesPart.split('\n');
+      const VARS = {};
+      variablesLines.forEach(line => {
+        const [key, value] = line.split('=').map(str => str.trim());
+        if (key && value) {
+          VARS[key] = parseFloat(value);
+        }
+      });
+
+      // Xử lý phần DATA
+      const dataLines = dataPart.split('\n');
+      const data = dataLines.map(line => {
+        line = line.replace(',', '.')
+        const [x, y] = line.trim().split('\t').map(str => parseFloat(str.trim()));
+        return { x: x, y: y };
+      });
+
+      return { VARS, data };
+    }
+
+    function chunk(array, n) {
+      const result = [];
+      const chunkSize = Math.ceil(array.length / n); // Kích thước của mỗi phần
+
+      for (let i = 0; i < n; i++) {
+        const start = i * chunkSize;
+        const end = start + chunkSize;
+        const chunk = array.slice(start, end);
+        if (chunk.length > 0) {
+          result.push(chunk);
+        }
+      }
+
+      // Kiểm tra và gộp 2 mảng cuối nếu mảng cuối cùng chỉ có 1 phần tử
+      if (result.length > 1 && result[result.length - 1].length === 1) {
+        const lastChunk = result.pop();
+        result[result.length - 1] = result[result.length - 1].concat(lastChunk);
+      }
+
+      return result;
+    }
+
+    function LeastSquares(array_x, array_y) {
+      if (array_x.length !== array_y.length) {
+        throw new Error("Array lengths must be equal.");
+      }
+
+      const n = array_x.length;
+      let sum_x = 0, sum_y = 0, sum_xy = 0, sum_x2 = 0;
+
+      for (let i = 0; i < n; i++) {
+        sum_x += array_x[i];
+        sum_y += array_y[i];
+        sum_xy += array_x[i] * array_y[i];
+        sum_x2 += array_x[i] * array_x[i];
+      }
+
+      const a = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x);
+      const b = (sum_y * sum_x2 - sum_x * sum_xy) / (n * sum_x2 - sum_x * sum_x);
+
+      return { a: a, b: b };
+    }
+  </script>
+</body>
+
+</html>
