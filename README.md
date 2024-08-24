@@ -1,3 +1,5 @@
+## https://trungnguyenthien.github.io/detai_huy/Linear.html
+Phương trình đường trung bình MRI intensity và HU
 
 ## https://trungnguyenthien.github.io/detai_huy/splitVrml.html
 Tạo vrml chứa các cubic.
