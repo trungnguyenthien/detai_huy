@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VRML Maker</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .inputs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .inputs input {
+      padding: 10px;
+      font-size: 16px;
+      border: 2px solid #cc0000;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    .inputs input[type="number"] {
+      border-color: #3c8c3c;
+    }
+
+    button {
+      padding: 10px;
+      font-size: 18px;
+      color: white;
+      background-color: #007bff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    textarea {
+      flex: 1;
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 2px solid #cc0000;
+      border-radius: 5px;
+      box-sizing: border-box;
+      resize: none;
+      color: #333;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <div class="inputs">
+      <input type="number" step="0.01" id="xmin" placeholder="xmin">
+      <input type="number" step="0.01" id="xmax" placeholder="xmax">
+      <input type="number" id="nx" placeholder="nx">
+
+      <input type="number" step="0.01" id="ymin" placeholder="ymin">
+      <input type="number" step="0.01" id="ymax" placeholder="ymax">
+      <input type="number" id="ny" placeholder="ny">
+
+      <input type="number" step="0.01" id="zmin" placeholder="zmin">
+      <input type="number" step="0.01" id="zmax" placeholder="zmax">
+      <input type="number" id="nz" placeholder="nz">
+    </div>
+
+    <button id="make-vrml">make vrml</button>
+
+    <textarea id="output" placeholder="Output will be displayed here..."></textarea>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('#make-vrml').on('click', function() {
+        const xmin = parseFloat($('#xmin').val());
+        const xmax = parseFloat($('#xmax').val());
+        const nx = parseInt($('#nx').val());
+
+        const ymin = parseFloat($('#ymin').val());
+        const ymax = parseFloat($('#ymax').val());
+        const ny = parseInt($('#ny').val());
+
+        const zmin = parseFloat($('#zmin').val());
+        const zmax = parseFloat($('#zmax').val());
+        const nz = parseInt($('#nz').val());
+
+
+
+        function createCubic(name, xmin, ymin, zmin, xmax, ymax, zmax) {
+          return `		DEF "cube ${name}" Transform {					
+			translation	-15279.4 5431.22 -18343.02233			
+			children [				
+				Shape { appearance Appearance {material Material{diffuseColor 0 1 0.156862745098039 transparency 1}}			
+					geometry PointSet {		
+						coord Coordinate {	
+							point [
+							${xmin} ${ymin} ${zmin}
+							${xmin} ${ymax} ${zmin}
+							${xmin} ${ymax} ${zmax}
+							${xmin} ${ymin} ${zmax}
+							${xmax} ${ymin} ${zmax}
+							${xmax} ${ymax} ${zmax}
+							${xmax} ${ymax} ${zmin}
+							${xmax} ${ymin} ${zmin}
+							]
+						}	
+						coordIndex [	
+							0 1 2 3 -1,
+							4 5 6 7 -1,
+							1 2 5 6 -1,
+							0 3 4 7 -1,
+							2 3 4 5 -1,
+							1 0 7 6 -1,
+						]	
+					}		
+				}			
+			]				
+		}`
+        }
+
+        function roundFloat5(num) {
+          return Number(num.toFixed(3));
+        }
+
+        const dx = Math.abs(xmax - xmin) / nx;
+        const dy = Math.abs(ymax - ymin) / ny;
+        const dz = Math.abs(zmax - zmin) / nz;
+        let cubies = [];
+        for (let xi = 0; xi < nx; xi++) {
+          for (let yi = 0; yi < ny; yi++) {
+            for (let zi = 0; zi < nz; zi++) {
+              const xi_min = xmin + dx * xi
+              const xi_max = xi_min + dx
+
+              const yi_min = ymin + dy * yi
+              const yi_max = yi_min + dy
+
+              const zi_min = zmin + dz * zi
+              const zi_max = zi_min + dz
+              const cube = createCubic(`name_x${xi}y${yi}z${zi}`, roundFloat5(xi_min), roundFloat5(yi_min), roundFloat5(zi_min), roundFloat5(xi_max), roundFloat5(yi_max), roundFloat5(zi_max))
+              cubies.push(cube)
+            }
+          }
+        }
+        var joinCubies = cubies.join("\n")
+        let template = `#VRML V2.0 utf8
+Viewpoint {							
+	orientation 0 0 1 0.75						
+	position 0 0 0						
+}							
+							
+Transform {							
+	children [						
+###CUBIC			
+	]
+}					
+`
+        const output = template.replace("###CUBIC", joinCubies)
+        $("#output").val(output)
+      });
+    });
+  </script>
+
+</body>
+
+</html>
