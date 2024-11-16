@@ -57,8 +57,8 @@
   <button class="execute-button btn btn-primary">Execute</button>
   <div class="container">
     <h4 class="text-center">XÁC ĐỊNH GIÁ TRỊ HU DỰA TRÊN MRI</h4>
-      <div class="textareas">
-        <textarea id="textarea1" placeholder="{TextArea1}">
+    <div class="textareas">
+      <textarea id="textarea1" placeholder="{TextArea1}">
 ---MRI---
 334
 422
@@ -693,8 +693,8 @@ MRI	HU
 307,6666667	42,55
 294,2222222	40,11111111
         </textarea>
-        <textarea id="textarea2" placeholder="{TextArea2}"></textarea>
-      </div>
+      <textarea id="textarea2" placeholder="{TextArea2}"></textarea>
+    </div>
   </div>
 
   <!-- Include jQuery -->
@@ -707,57 +707,60 @@ MRI	HU
   <script>
     // Đăng ký sự kiện click sau khi trang load hoàn tất
     $(document).ready(function () {
-  $(".execute-button").click(function () {
-    let { MRIS, data } = processInput($('#textarea1').val());
+      $(".execute-button").click(function () {
+        let { MRIS, data } = processInput($('#textarea1').val());
 
-    console.log("MRIS:", MRIS);
-    console.log("Data:", data);
+        console.log("MRIS:", MRIS);
+        console.log("Data:", data);
 
-    let results = MRIS.map(mri => {
-      let min, max;
+        let results = MRIS.map(mri => {
+          let min, max;
 
-      for (let i = 0; i < data.length - 1; i++) {
-        if (data[i].mri <= mri && mri <= data[i + 1].mri) {
-          min = data[i];
-          max = data[i + 1];
-          break;
-        }
-      }
+          for (let i = 0; i < data.length - 1; i++) {
+            if (data[i].mri <= mri && mri <= data[i + 1].mri) {
+              min = data[i];
+              max = data[i + 1];
+              break;
+            }
+          }
 
-      let avgHu = min && max ? (min.hu + max.hu) / 2 : null;
+          let avgHu = null;
+          if (min && max && min.mri !== max.mri) {
+            avgHu = min.hu + (mri - min.mri) * (max.hu - min.hu) / (max.mri - min.mri);
+          }
 
-      return { mri, min, max, avgHu };
+          return { mri, min, max, avgHu };
+        });
+
+        console.log("Results:", results);
+
+        // Hiển thị kết quả vào textarea2
+        $('#textarea2').text(results.map(r =>
+          `MRI: ${r.mri}\nAvgHu: ${r.avgHu ?? 'cant determine'}\nMin: ${JSON.stringify(r.min)}\nMax: ${JSON.stringify(r.max)}\n=====================`
+        ).join('\n'));
+      });
     });
 
-    console.log("Results:", results);
+    function processInput(input) {
+      let sections = input.split('---DATA---');
+      let mrisSection = sections[0].replace('---MRI---', '').trim();
+      let dataSection = sections[1].trim();
 
-    // Hiển thị kết quả vào textarea2
-    $('#textarea2').text(results.map(r => 
-      `MRI: ${r.mri}\nAvgHu: ${r.avgHu ?? 'cant determine'}\nMin: ${JSON.stringify(r.min)}\nMax: ${JSON.stringify(r.max)}\n=====================`
-    ).join('\n'));
-  });
-});
+      // Parse MRIS
+      let MRIS = mrisSection.split('\n').map(value => parseFloat(value.trim()));
 
-function processInput(input) {
-  let sections = input.split('---DATA---');
-  let mrisSection = sections[0].replace('---MRI---', '').trim();
-  let dataSection = sections[1].trim();
+      // Parse DATA
+      let data = [];
+      dataSection.split('\n').forEach(line => {
+        let [mri, hu] = line.split('\t').map(value => parseFloat(value.replace(',', '.')));
+        data.push({ mri, hu });
+      });
 
-  // Parse MRIS
-  let MRIS = mrisSection.split('\n').map(value => parseFloat(value.trim()));
+      // Sort data by MRI values
+      data = _.sortBy(data, 'mri');
 
-  // Parse DATA
-  let data = [];
-  dataSection.split('\n').forEach(line => {
-    let [mri, hu] = line.split('\t').map(value => parseFloat(value.replace(',', '.')));
-    data.push({ mri, hu });
-  });
-
-  // Sort data by MRI values
-  data = _.sortBy(data, 'mri');
-
-  return { MRIS, data };
-}
+      return { MRIS, data };
+    }
 
   </script>
 </body>
