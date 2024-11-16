@@ -59,8 +59,12 @@
     <h4 class="text-center">XÁC ĐỊNH GIÁ TRỊ HU DỰA TRÊN MRI</h4>
       <div class="textareas">
         <textarea id="textarea1" placeholder="{TextArea1}">
----VARIABLES---
-MRI=334
+---MRI---
+334
+422
+98
+23
+667
 ---DATA---
 MRI	HU
 46,33333333	102,1428571
@@ -703,63 +707,57 @@ MRI	HU
   <script>
     // Đăng ký sự kiện click sau khi trang load hoàn tất
     $(document).ready(function () {
-      $(".execute-button").click(function () {
-        let { VARS, data } = processInput($('#textarea1').val());
+  $(".execute-button").click(function () {
+    let { MRIS, data } = processInput($('#textarea1').val());
 
-        console.log(VARS);
-        console.log(data);
+    console.log("MRIS:", MRIS);
+    console.log("Data:", data);
 
-        // Tìm min và max dựa trên điều kiện min.mri <= VARS.MRI <= max.mri
-        let min, max;
+    let results = MRIS.map(mri => {
+      let min, max;
 
-        for (let i = 0; i < data.length - 1; i++) {
-          if (data[i].mri <= VARS.MRI && VARS.MRI <= data[i + 1].mri) {
-            min = data[i];
-            max = data[i + 1];
-            break;
-          }
+      for (let i = 0; i < data.length - 1; i++) {
+        if (data[i].mri <= mri && mri <= data[i + 1].mri) {
+          min = data[i];
+          max = data[i + 1];
+          break;
         }
+      }
 
-        // Tính avgHu = trung bình cộng của min.hu và max.hu
-        let avgHu = min && max ? (min.hu + max.hu) / 2 : null;
+      let avgHu = min && max ? (min.hu + max.hu) / 2 : null;
 
-        console.log(`min`);
-        console.log(min);
-        console.log(`max`);
-        console.log(max);
-        console.log(`avgHu`);
-        console.log(avgHu);
-
-        // Hiển thị kết quả vào #textarea2
-        $('#textarea2').text(`min: ${JSON.stringify(min)}\nmax: ${JSON.stringify(max)}\navgHu: ${avgHu}`);
-      });
+      return { mri, min, max, avgHu };
     });
 
-    function processInput(input) {
-      // Tách input thành các phần VARIABLES và DATA
-      let sections = input.split('---DATA---');
-      let variablesSection = sections[0].replace('---VARIABLES---', '').trim();
-      let dataSection = sections[1].trim();
+    console.log("Results:", results);
 
-      // Parse VARIABLES
-      let VARS = {};
-      variablesSection.split('\n').forEach(line => {
-        let [key, value] = line.split('=');
-        VARS[key.trim()] = parseFloat(value.trim());
-      });
+    // Hiển thị kết quả vào textarea2
+    $('#textarea2').text(results.map(r => 
+      `MRI: ${r.mri}\nAvgHu: ${r.avgHu ?? 'cant determine'}\nMin: ${JSON.stringify(r.min)}\nMax: ${JSON.stringify(r.max)}\n=====================`
+    ).join('\n'));
+  });
+});
 
-      // Parse DATA
-      let data = [];
-      dataSection.split('\n').forEach(line => {
-        let [mri, hu] = line.split('\t').map(value => parseFloat(value.replace(',', '.')));
-        data.push({ mri, hu });
-      });
+function processInput(input) {
+  let sections = input.split('---DATA---');
+  let mrisSection = sections[0].replace('---MRI---', '').trim();
+  let dataSection = sections[1].trim();
 
-      // Sắp xếp data theo giá trị MRI tăng dần
-      data = _.sortBy(data, 'mri');
+  // Parse MRIS
+  let MRIS = mrisSection.split('\n').map(value => parseFloat(value.trim()));
 
-      return { VARS, data };
-    }
+  // Parse DATA
+  let data = [];
+  dataSection.split('\n').forEach(line => {
+    let [mri, hu] = line.split('\t').map(value => parseFloat(value.replace(',', '.')));
+    data.push({ mri, hu });
+  });
+
+  // Sort data by MRI values
+  data = _.sortBy(data, 'mri');
+
+  return { MRIS, data };
+}
 
   </script>
 </body>
