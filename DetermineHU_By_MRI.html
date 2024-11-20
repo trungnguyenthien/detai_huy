@@ -738,7 +738,8 @@ MRI	HU
 
         // Hiển thị kết quả vào textarea2
         $('#textarea2').text(results.map(r =>
-          `MRI: ${r.mri}\nAvgHu: ${r.avgHu ?? 'cant determine'}\nMin: ${JSON.stringify(r.min)}\nMax: ${JSON.stringify(r.max)}\n=====================`
+          r.avgHu ?? 'cant determine'
+          // `MRI: ${r.mri}\nAvgHu: ${r.avgHu ?? 'cant determine'}\nMin: ${JSON.stringify(r.min)}\nMax: ${JSON.stringify(r.max)}\n=====================`
         ).join('\n'));
       });
     });
